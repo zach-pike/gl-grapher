@@ -2,9 +2,11 @@
 #include <vector>
 
 #include "Calculator/CalculatorUI/CalculatorUI.hpp"
+#include "Calculator/CalculatorWorker/CalculatorWorker.hpp"
 
 int main() {
-    CalculatorUI calc;
+    CalculatorWorker worker;
+    CalculatorUI calc(worker);
 
     calc.runUI();
 
