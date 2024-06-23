@@ -7,6 +7,7 @@
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_glfw.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
+#include "imgui/misc/cpp/imgui_stdlib.h"
 
 #include "Utility/GL/VertexArray/VertexArray.hpp"
 #include "Utility/GL/Buffer/Buffer.hpp"
@@ -61,15 +62,11 @@ void CalculatorUI::runUI() {
     lineShader.loadShaders();
     lineBuffer.init();
 
-    // Put some data in the buffer
-    std::vector<glm::vec2> ptsData;
-    for(float i=-1; i <= 1; i += 0.01) {
-        ptsData.push_back(glm::vec2(i, std::sin(5.f * i)));
-    }
-    lineBuffer.bufferData(ptsData);
-
     // Set clear color
     glClearColor(.25f, .5f, .75f, 1.0f);
+
+    std::string expression;
+
 
     while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
         double frameStartTime = glfwGetTime();
@@ -80,7 +77,21 @@ void CalculatorUI::runUI() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        
+
+        // Load new line data if available
+        if (worker.isNewDataAvailable()) {
+            auto data = worker.getData();
+            lineBuffer.bufferData(data);
+        }
+
+        ImGui::Begin("Controls");
+
+            ImGui::InputText("Expression", &expression);
+            if (ImGui::Button("Start")) {
+                worker.setExpression(expression);
+            }
+
+        ImGui::End();
 
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -111,6 +122,10 @@ void CalculatorUI::runUI() {
         if (sleepTime > 0) {
             std::this_thread::sleep_for(std::chrono::microseconds((std::int64_t)sleepTime));
         }
+
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
 
         glfwSwapBuffers(window);
     }
