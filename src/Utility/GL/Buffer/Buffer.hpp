@@ -10,6 +10,8 @@ class Buffer {
 private:
     GLuint buffer;
     bool   ready = false;
+
+    std::size_t lastBufferedCount = 0;
 public:
     Buffer() {}
     ~Buffer() {
@@ -35,9 +37,15 @@ public:
 
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	    glBufferData(GL_ARRAY_BUFFER, sizeof(T)*data.size(), data.data(), GL_STATIC_DRAW);
+
+        lastBufferedCount = data.size();
     }
 
     GLuint getBufferID() {
         return buffer;
+    }
+
+    std::size_t size() const {
+        return lastBufferedCount;
     }
 };
