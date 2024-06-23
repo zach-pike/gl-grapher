@@ -16,11 +16,9 @@ void CalculatorWorker::worker() {
         }
 
         // Data not ready
-
-        std::cout << "Working...\n";
-        data.clear();
-
         std::scoped_lock lock(currentExpressionLock, viewportInfoLock, dataLock);
+
+        data.clear();
 
         // Evaluate over x
         for (xVar = viewportInfo.x; xVar < (viewportInfo.x+viewportInfo.width); xVar += .01f) {

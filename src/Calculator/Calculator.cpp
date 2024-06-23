@@ -5,8 +5,8 @@
 
 void runCalculator() {
     CalculatorWorker worker;
-    CalculatorUI ui(worker);
-    worker.setViewportInfo(CalculatorWorker::CalculatorViewportPosition{ -10, -10, 20, 20 });
+    worker.setExpression("x");
 
+    CalculatorUI ui(worker);
     ui.runUI();
 }

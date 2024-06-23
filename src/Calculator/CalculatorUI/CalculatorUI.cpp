@@ -12,7 +12,6 @@
 #include "Utility/GL/VertexArray/VertexArray.hpp"
 #include "Utility/GL/Buffer/Buffer.hpp"
 #include "Utility/GL/Shader/Shader.hpp"
-#include "Calculator/CalculatorWorker/CalculatorWorker.hpp"
 
 #include <vector>
 #include <thread>
@@ -20,7 +19,11 @@
 
 CalculatorUI::CalculatorUI(CalculatorWorker& _worker):
     logger("Calculator", Logger::FGColors::GREEN),
-    worker(_worker) {}
+    viewportInfo(CalculatorWorker::CalculatorViewportPosition{ -10, -10, 20, 20 }),
+    worker(_worker)
+{
+    worker.setViewportInfo(viewportInfo);
+}
 
 CalculatorUI::~CalculatorUI() {}
 
@@ -73,6 +76,8 @@ void CalculatorUI::runUI() {
 
         glfwPollEvents();
 
+        glClear(GL_COLOR_BUFFER_BIT);
+
         // ImGui stuff
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -91,9 +96,26 @@ void CalculatorUI::runUI() {
                 worker.setExpression(expression);
             }
 
+            if (ImGui::Button("Up")) {
+                viewportInfo.y += 1;
+                worker.setViewportInfo(viewportInfo);
+            }
+            if (ImGui::Button("Down")) {
+                viewportInfo.y -= 1;
+                worker.setViewportInfo(viewportInfo);
+            }
+            if (ImGui::Button("Left")) {
+                viewportInfo.x -= 1;
+                worker.setViewportInfo(viewportInfo);
+            }
+            if (ImGui::Button("Right")) {
+                viewportInfo.x += 1;
+                worker.setViewportInfo(viewportInfo);
+            }
+
         ImGui::End();
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        lineShader.useShader();
 
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, lineBuffer.getBufferID());
@@ -110,10 +132,10 @@ void CalculatorUI::runUI() {
 
         glDisableVertexAttribArray(0);
 
-
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+        // Frame limiter
         double frameEndTime = glfwGetTime();
         double frameTimeMS = (frameEndTime - frameStartTime) * 1e6;
         const double requiredFrameTimeMS = 16667;
@@ -123,6 +145,7 @@ void CalculatorUI::runUI() {
             std::this_thread::sleep_for(std::chrono::microseconds((std::int64_t)sleepTime));
         }
 
+        // Make viewport always the same size as window
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
