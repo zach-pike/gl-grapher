@@ -1,15 +1,14 @@
 #pragma once
 
-#include "Utility/Logger/Logger.hpp"
-
+#include "CalculatorUI/CalculatorUI.hpp"
+#include "CalculatorWorker/CalculatorWorker.hpp"
 
 class Calculator {
 private:
-    Logger logger;
+    CalculatorUI ui;
+    CalculatorWorker worker;
 
 public:
     Calculator();
     ~Calculator();
-
-    void runUI();
 };

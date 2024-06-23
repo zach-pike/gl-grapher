@@ -1,10 +1,10 @@
 #include <iostream>
 #include <vector>
 
-#include "Calculator/Calculator.hpp"
+#include "Calculator/CalculatorUI/CalculatorUI.hpp"
 
 int main() {
-    Calculator calc;
+    CalculatorUI calc;
 
     calc.runUI();
 
