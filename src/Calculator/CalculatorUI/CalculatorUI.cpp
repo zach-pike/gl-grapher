@@ -2,18 +2,24 @@
 
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
-
 #include <glm/glm.hpp>
+
+#include "imgui/imgui.h"
+#include "imgui/backends/imgui_impl_glfw.h"
+#include "imgui/backends/imgui_impl_opengl3.h"
+
 #include "Utility/GL/VertexArray/VertexArray.hpp"
 #include "Utility/GL/Buffer/Buffer.hpp"
 #include "Utility/GL/Shader/Shader.hpp"
+#include "Calculator/CalculatorWorker/CalculatorWorker.hpp"
 
 #include <vector>
 #include <thread>
 #include <chrono>
 
-CalculatorUI::CalculatorUI():
-    logger("Calculator", Logger::FGColors::GREEN) {}
+CalculatorUI::CalculatorUI(CalculatorWorker& _worker):
+    logger("Calculator", Logger::FGColors::GREEN),
+    worker(_worker) {}
 
 CalculatorUI::~CalculatorUI() {}
 
@@ -32,35 +38,50 @@ void CalculatorUI::runUI() {
         exit(1);
     }
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init();
+
     // OpenGL ready!
     VertexArray vao;
     vao.initVAO();
     vao.useVAO();
 
+    // Create shader and buffer
     Shader lineShader("shader/lineShader/vertex.glsl", "shader/lineShader/fragment.glsl");
     Buffer<glm::vec2> lineBuffer;
 
+    // Load shader and init line buffer
     lineShader.loadShaders();
-
     lineBuffer.init();
 
     // Put some data in the buffer
-    std::vector<glm::vec2> ptsData = {
-        glm::vec2(-1, -1),
-        glm::vec2( -.7, -.4),
-        glm::vec2(0, 0),
-        glm::vec2(.5, -.5),
-        glm::vec2(1, 1)
-    };
-
+    std::vector<glm::vec2> ptsData;
+    for(float i=-1; i <= 1; i += 0.01) {
+        ptsData.push_back(glm::vec2(i, std::sin(5.f * i)));
+    }
     lineBuffer.bufferData(ptsData);
 
+    // Set clear color
     glClearColor(.25f, .5f, .75f, 1.0f);
 
     while (!glfwWindowShouldClose(window) && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
         double frameStartTime = glfwGetTime();
 
         glfwPollEvents();
+
+        // ImGui stuff
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        
+
         glClear(GL_COLOR_BUFFER_BIT);
 
         glEnableVertexAttribArray(0);
@@ -78,6 +99,10 @@ void CalculatorUI::runUI() {
 
         glDisableVertexAttribArray(0);
 
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         double frameEndTime = glfwGetTime();
         double frameTimeMS = (frameEndTime - frameStartTime) * 1e6;
         const double requiredFrameTimeMS = 16667;
@@ -94,6 +119,10 @@ void CalculatorUI::runUI() {
     lineBuffer.uninit();
     lineShader.unloadShader();
     vao.uninitVAO();
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwTerminate();
 }
